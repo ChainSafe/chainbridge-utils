@@ -20,5 +20,7 @@ jobs:
     - language: go
       go: 1.13.x
       name: "Test"
+      install:
+        - wget -P $HOME/bin/ https://chainbridge.ams3.digitaloceanspaces.com/subkey && chmod +x $HOME/bin/subkey && subkey --version
       script:
         - make test
