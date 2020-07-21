@@ -1,0 +1,24 @@
+# Copyright 2020 ChainSafe Systems
+# SPDX-License-Identifier: LGPL-3.0-only
+
+env:
+  global:
+    - GO111MODULE=on
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $GOPATH/pkg/mod
+
+jobs:
+  include:
+    - language: go
+      go: 1.13.x
+      name: "Linter"
+      script:
+        - make lint
+    - language: go
+      go: 1.13.x
+      name: "Test"
+      script:
+        - make test
