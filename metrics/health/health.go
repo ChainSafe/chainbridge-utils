@@ -57,7 +57,7 @@ func (s httpMetricServer) HealthStatus(w http.ResponseWriter, _ *http.Request) {
 		prev := s.stats[i]
 		if s.stats[i].Height == nil {
 			// First time we've received a block for this chain
-			s.stats[chain.Id()] = ChainInfo{
+			s.stats[i] = ChainInfo{
 				ChainId:     chain.Id(),
 				Height:      current.Height,
 				LastUpdated: current.LastUpdated,
