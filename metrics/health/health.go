@@ -67,8 +67,8 @@ func (s httpMetricServer) HealthStatus(w http.ResponseWriter, _ *http.Request) {
 			timeDiff := now.Sub(prev.LastUpdated)
 			// If block has changed, update it
 			if current.Height.Cmp(prev.Height) == 1 {
-				s.stats[chain.Id()].LastUpdated = current.LastUpdated
-				s.stats[chain.Id()].Height = current.Height
+				s.stats[i].LastUpdated = current.LastUpdated
+				s.stats[i].Height = current.Height
 			} else if int(timeDiff.Seconds()) >= s.timeDelay { // Error if we exceeded the time limit
 				response := &httpResponse{
 					Chains: []ChainInfo{},
