@@ -15,14 +15,11 @@ import (
 	log "github.com/ChainSafe/log15"
 )
 
-// After this duration with no changes a chain will return an error
-const BlockTimeout = 20
-
 type httpMetricServer struct {
-	port      int
-	timeDelay int
-	chains    []core.Chain
-	stats     []ChainInfo
+	port         int
+	blockTimeout int // After this duration (seconds) with no change in block height a chain will be considered unhealthy
+	chains       []core.Chain
+	stats        []ChainInfo
 }
 
 type httpResponse struct {
@@ -36,12 +33,12 @@ type ChainInfo struct {
 	LastUpdated time.Time   `json:"lastUpdated"`
 }
 
-func NewHealthServer(port int, chains []core.Chain) *httpMetricServer {
+func NewHealthServer(port int, chains []core.Chain, blockTimeout int) *httpMetricServer {
 	return &httpMetricServer{
-		port:      port,
-		chains:    chains,
-		timeDelay: BlockTimeout,
-		stats:     make([]ChainInfo, len(chains)),
+		port:         port,
+		chains:       chains,
+		blockTimeout: blockTimeout,
+		stats:        make([]ChainInfo, len(chains)),
 	}
 }
 
@@ -69,7 +66,7 @@ func (s httpMetricServer) HealthStatus(w http.ResponseWriter, _ *http.Request) {
 			if current.Height.Cmp(prev.Height) == 1 {
 				s.stats[i].LastUpdated = current.LastUpdated
 				s.stats[i].Height = current.Height
-			} else if int(timeDiff.Seconds()) >= s.timeDelay { // Error if we exceeded the time limit
+			} else if int(timeDiff.Seconds()) >= s.blockTimeout { // Error if we exceeded the time limit
 				response := &httpResponse{
 					Chains: []ChainInfo{},
 					Error:  fmt.Sprintf("chain %d height hasn't changed for %f seconds. Current Height: %s", prev.ChainId, timeDiff.Seconds(), current.Height),
