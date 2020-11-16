@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ChainSafe/chainbridge-utils/core"
@@ -18,12 +19,12 @@ import (
 type httpMetricServer struct {
 	port         int
 	blockTimeout int // After this duration (seconds) with no change in block height a chain will be considered unhealthy
-	chains       []core.Chain
-	stats        []ChainInfo
+	chains       map[string]core.Chain
+	stats        map[string]*ChainInfo
 }
 
 type httpResponse struct {
-	Chains []ChainInfo `json:"chains,omitempty"`
+	Data ChainInfo `json:"data,omitempty"`
 	Error  string      `json:"error,omitempty"`
 }
 
@@ -34,67 +35,75 @@ type ChainInfo struct {
 }
 
 func NewHealthServer(port int, chains []core.Chain, blockTimeout int) *httpMetricServer {
+	chainMap := make(map[string]core.Chain)
+	for _, c := range chains {
+		chainMap[c.Name()] = c
+	}
+
 	return &httpMetricServer{
 		port:         port,
-		chains:       chains,
+		chains:       chainMap,
 		blockTimeout: blockTimeout,
-		stats:        make([]ChainInfo, len(chains)),
+		stats:        make(map[string]*ChainInfo),
 	}
 }
 
 // healthStatus is a catch-all update that grabs the latest updates on the running chains
 // It assumes that the configuration was set correctly, therefore the relevant chains are
 // only those that are in the core.Core registry.
-func (s httpMetricServer) HealthStatus(w http.ResponseWriter, _ *http.Request) {
+func (s httpMetricServer) HealthStatus(w http.ResponseWriter, r *http.Request) {
+	tokens := strings.Split(r.URL.String(), "/")
+	// TODO: What if len(tokens) < 1
+	chainName := tokens[len(tokens) - 1]
+	chain, ok := s.chains[chainName]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
-	// Iterate through their block heads and update the cache accordingly
-	for i, chain := range s.chains {
-		current := chain.LatestBlock()
-		prev := s.stats[i]
-		if s.stats[i].Height == nil {
-			// First time we've received a block for this chain
-			s.stats[i] = ChainInfo{
-				ChainId:     chain.Id(),
-				Height:      current.Height,
-				LastUpdated: current.LastUpdated,
+	current := chain.LatestBlock()
+	prev := s.stats[chainName]
+	if s.stats[chainName].Height == nil {
+		// First time we've received a block for this chain
+		s.stats[chainName] = &ChainInfo{
+			ChainId:     chain.Id(),
+			Height:      current.Height,
+			LastUpdated: current.LastUpdated,
+		}
+	} else {
+		now := time.Now()
+		timeDiff := now.Sub(prev.LastUpdated)
+		// If block has changed, update it
+		if current.Height.Cmp(prev.Height) == 1 {
+			s.stats[chainName].LastUpdated = current.LastUpdated
+			s.stats[chainName].Height = current.Height
+		} else if int(timeDiff.Seconds()) >= s.blockTimeout { // Error if we exceeded the time limit
+			response := &httpResponse{
+				Error:  fmt.Sprintf("chain %d height hasn't changed for %f seconds. Current Height: %s", prev.ChainId, timeDiff.Seconds(), current.Height),
 			}
-		} else {
-			now := time.Now()
-			timeDiff := now.Sub(prev.LastUpdated)
-			// If block has changed, update it
-			if current.Height.Cmp(prev.Height) == 1 {
-				s.stats[i].LastUpdated = current.LastUpdated
-				s.stats[i].Height = current.Height
-			} else if int(timeDiff.Seconds()) >= s.blockTimeout { // Error if we exceeded the time limit
-				response := &httpResponse{
-					Chains: []ChainInfo{},
-					Error:  fmt.Sprintf("chain %d height hasn't changed for %f seconds. Current Height: %s", prev.ChainId, timeDiff.Seconds(), current.Height),
-				}
-				w.WriteHeader(http.StatusInternalServerError)
-				err := json.NewEncoder(w).Encode(response)
-				if err != nil {
-					log.Error("Failed to write metrics", "err", err)
-				}
-				return
-			} else if current.Height != nil && prev.Height != nil && current.Height.Cmp(prev.Height) == -1 { // Error for having a smaller blockheight than previous
-				response := &httpResponse{
-					Chains: []ChainInfo{},
-					Error:  fmt.Sprintf("unexpected block height. previous = %s current = %s", prev.Height, current.Height),
-				}
-				w.WriteHeader(http.StatusInternalServerError)
-				err := json.NewEncoder(w).Encode(response)
-				if err != nil {
-					log.Error("Failed to write metrics", "err", err)
-				}
-				return
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(response)
+			if err != nil {
+				log.Error("Failed to write metrics", "err", err)
 			}
+			return
+		} else if current.Height != nil && prev.Height != nil && current.Height.Cmp(prev.Height) == -1 { // Error for having a smaller blockheight than previous
+			response := &httpResponse{
+				Error:  fmt.Sprintf("unexpected block height. previous = %s current = %s", prev.Height, current.Height),
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(response)
+			if err != nil {
+				log.Error("Failed to write metrics", "err", err)
+			}
+			return
 		}
 	}
 
 	response := &httpResponse{
-		Chains: s.stats,
-		Error:  "",
+		Data: *s.stats[chainName],
 	}
 	w.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(w).Encode(response)
