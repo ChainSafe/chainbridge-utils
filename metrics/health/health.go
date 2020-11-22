@@ -20,19 +20,16 @@ type httpMetricServer struct {
 	port         int
 	blockTimeout int // After this duration (seconds) with no change in block height a chain will be considered unhealthy
 	chains       map[string]core.Chain
-	stats        map[string]*ChainInfo
+	stats        map[string]*ChainStats
 }
 
-type httpResponse struct {
-	Data ChainInfo `json:"data,omitempty"`
-}
-
-type ChainInfo struct {
+type ChainStats struct {
 	ChainId     msg.ChainId `json:"chainId"`
 	Height      *big.Int    `json:"height"`
 	LastUpdated time.Time   `json:"lastUpdated"`
 }
 
+// NewHealthServer creates a new server with unique endpoints for each chain based on chain name.
 func NewHealthServer(port int, chains []core.Chain, blockTimeout int) *httpMetricServer {
 	chainMap := make(map[string]core.Chain)
 	for _, c := range chains {
@@ -43,7 +40,7 @@ func NewHealthServer(port int, chains []core.Chain, blockTimeout int) *httpMetri
 		port:         port,
 		chains:       chainMap,
 		blockTimeout: blockTimeout,
-		stats:        make(map[string]*ChainInfo),
+		stats:        make(map[string]*ChainStats),
 	}
 }
 
@@ -64,7 +61,7 @@ func (s httpMetricServer) HealthStatus(w http.ResponseWriter, r *http.Request) {
 	prev := s.stats[chainName]
 	if s.stats[chainName] == nil {
 		// First time we've received a block for this chain
-		s.stats[chainName] = &ChainInfo{
+		s.stats[chainName] = &ChainStats{
 			ChainId:     chain.Id(),
 			Height:      current.Height,
 			LastUpdated: current.LastUpdated,
@@ -77,18 +74,15 @@ func (s httpMetricServer) HealthStatus(w http.ResponseWriter, r *http.Request) {
 			s.stats[chainName].LastUpdated = current.LastUpdated
 			s.stats[chainName].Height = current.Height
 		} else if int(timeDiff.Seconds()) >= s.blockTimeout { // Error if we exceeded the time limit
-			http.Error(w,  fmt.Sprintf("chain %d height hasn't changed for %f seconds. Current Height: %s", prev.ChainId, timeDiff.Seconds(), current.Height), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("chain %d height hasn't changed for %f seconds. Current Height: %s", prev.ChainId, timeDiff.Seconds(), current.Height), http.StatusInternalServerError)
 			return
 		} else if current.Height != nil && prev.Height != nil && current.Height.Cmp(prev.Height) == -1 { // Error for having a smaller blockheight than previous
-			http.Error(w,  fmt.Sprintf("unexpected block height. previous = %s current = %s", prev.Height, current.Height), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("unexpected block height. previous = %s current = %s", prev.Height, current.Height), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	response := &httpResponse{
-		Data: *s.stats[chainName],
-	}
-	err := json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(s.stats[chainName])
 	if err != nil {
 		log.Error("Failed to serve metrics")
 	}
