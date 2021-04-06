@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/ChainSafe/log15 v1.0.0
-	// github.com/centrifuge/go-substrate-rpc-client v2.0.0+incompatible
 	github.com/centrifuge/go-substrate-rpc-client/v2 v2.0.1
 	github.com/ethereum/go-ethereum v1.9.17
 	github.com/golang/protobuf v1.3.3 // indirect
