@@ -10,10 +10,10 @@ import (
 )
 
 type ChainMetrics struct {
-	BlocksProcessed prometheus.Counter
+	BlocksProcessed      prometheus.Counter
 	LatestProcessedBlock prometheus.Gauge
-	LatestKnownBlock prometheus.Gauge
-	VotesSubmitted  prometheus.Counter
+	LatestKnownBlock     prometheus.Gauge
+	VotesSubmitted       prometheus.Counter
 }
 
 func NewChainMetrics(chain string) *ChainMetrics {
