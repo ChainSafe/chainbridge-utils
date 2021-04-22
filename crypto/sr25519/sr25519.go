@@ -18,7 +18,7 @@ type Keypair struct {
 	keyringPair *signature.KeyringPair
 }
 
-func GenerateKeypair(network string) (*Keypair, error) {
+func GenerateKeypair(network uint8) (*Keypair, error) {
 	data := make([]byte, 32)
 	_, err := rand.Read(data)
 	if err != nil {
@@ -27,9 +27,8 @@ func GenerateKeypair(network string) (*Keypair, error) {
 	return NewKeypairFromSeed("//"+hexutil.Encode(data), network)
 }
 
-func NewKeypairFromSeed(seed, network string) (*Keypair, error) {
-	// NOTE: use dead code to replace temporarily
-	kp, err := signature.KeyringPairFromSecret(seed, 42)
+func NewKeypairFromSeed(seed string, network uint8) (*Keypair, error) {
+	kp, err := signature.KeyringPairFromSecret(seed, network)
 	return &Keypair{&kp}, err
 }
 
