@@ -18,7 +18,7 @@ import (
 	"github.com/ChainSafe/chainbridge-utils/crypto/secp256k1"
 	sr25519 "github.com/ChainSafe/chainbridge-utils/crypto/sr25519"
 	"golang.org/x/crypto/blake2b"
-	"golang.org/x/crypto/ssh/terminal"
+	terminal "golang.org/x/term"
 )
 
 type EncryptedKeystore struct {
