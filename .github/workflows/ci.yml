@@ -40,8 +40,7 @@ jobs:
           chmod +x $HOME/.local/bin/subkey
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Test
-        run: |
-          make test
+        run: make test
 
   lint:
     name: Lint and License Headers
