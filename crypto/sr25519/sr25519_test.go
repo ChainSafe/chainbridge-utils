@@ -4,14 +4,15 @@
 package sr25519
 
 import (
+	"github.com/ChainSafe/chainbridge-utils/crypto/sr25519/known_network_ids"
 	"reflect"
 	"testing"
 
-	"github.com/centrifuge/go-substrate-rpc-client/signature"
+	"github.com/centrifuge/go-substrate-rpc-client/v3/signature"
 )
 
 func TestNewKeypairFromSeed(t *testing.T) {
-	kp, err := NewKeypairFromSeed("//Alice", "substrate")
+	kp, err := NewKeypairFromSeed("//Alice", known_network_ids.SUBSTRATE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func TestNewKeypairFromSeed(t *testing.T) {
 }
 
 func TestKeypair_AsKeyringPair(t *testing.T) {
-	kp, err := NewKeypairFromSeed("//Alice", "substrate")
+	kp, err := NewKeypairFromSeed("//Alice", known_network_ids.SUBSTRATE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +39,7 @@ func TestKeypair_AsKeyringPair(t *testing.T) {
 }
 
 func TestEncodeAndDecodeKeypair(t *testing.T) {
-	kp, err := NewKeypairFromSeed("//Alice", "substrate")
+	kp, err := NewKeypairFromSeed("//Alice", known_network_ids.SUBSTRATE)
 	if err != nil {
 		t.Fatal(err)
 	}
