@@ -6,6 +6,7 @@ package keystore
 import (
 	"bytes"
 	"crypto/rand"
+	"github.com/ChainSafe/chainbridge-utils/crypto/sr25519/known_network_ids"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -109,7 +110,7 @@ func TestEncryptAndDecryptFromFile_Sr25519(t *testing.T) {
 	file, fp := createTestFile(t)
 	defer os.Remove(fp)
 
-	kp, err := sr25519.NewKeypairFromSeed("//seed", "substrate")
+	kp, err := sr25519.NewKeypairFromSeed("//seed", known_network_ids.SUBSTRATE)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +135,7 @@ func TestDecryptIncorrectType(t *testing.T) {
 	file, fp := createTestFile(t)
 	defer os.Remove(fp)
 
-	kp, err := sr25519.NewKeypairFromSeed("//seed", "substrate")
+	kp, err := sr25519.NewKeypairFromSeed("//seed", known_network_ids.SUBSTRATE)
 	if err != nil {
 		t.Fatal(err)
 	}
