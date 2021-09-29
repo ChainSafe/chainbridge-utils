@@ -34,6 +34,10 @@ func (c *Core) AddChain(chain Chain) {
 	chain.SetRouter(c.route)
 }
 
+func (c *Core) SetRouter(chain Chain) {
+	chain.SetRouter(c.route)
+}
+
 // Start will call all registered chains' Start methods and block forever (or until signal is received)
 func (c *Core) Start() {
 	for _, chain := range c.Registry {
