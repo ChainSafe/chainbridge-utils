@@ -11,7 +11,8 @@ import (
 )
 
 func TestNewKeypairFromSeed(t *testing.T) {
-	kp, err := NewKeypairFromSeed("//Alice", "substrate")
+	// @dev can leave second arguemnt (network) empty if using default, substrate
+	kp, err := NewKeypairFromSeed("//Alice", "")
 	if err != nil {
 		t.Fatal(err)
 	}
