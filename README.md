@@ -1,5 +1,7 @@
 # chainbridge-utils
 
+Utilities relating to [chainbridge v1](https://github.com/chainsafe/chainbridge).
+
 # ChainSafe Security Policy
 
 ## Reporting a Security Bug
