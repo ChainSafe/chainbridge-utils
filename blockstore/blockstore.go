@@ -89,7 +89,7 @@ func (b *Blockstore) TryLoadLatestBlock() (*big.Int, error) {
 			return nil, err
 		}
 
-		if string(dat) == '' {
+		if string(dat) == "" {
 			return nil, errors.New("empty blockstore")
 		}
 
