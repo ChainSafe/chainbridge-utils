@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	// "log"
 
 	"github.com/vKolerts/chainbridge-utils/msg"
 )
@@ -66,9 +67,16 @@ func (b *Blockstore) StoreBlock(block *big.Int) error {
 
 	// Write bytes to file
 	data := []byte(block.String())
-	err := ioutil.WriteFile(b.fullPath, data, 0600)
+	err := ioutil.WriteFile(b.fullPath + ".tmp", data, 0600)
 	if err != nil {
 		return err
+	}
+
+	b.TryLoadLatestBlock()
+
+	e := os.Rename(b.fullPath + ".tmp", b.fullPath)
+	if e != nil {
+		return e;
 	}
 
 	return nil
@@ -90,10 +98,15 @@ func (b *Blockstore) TryLoadLatestBlock() (*big.Int, error) {
 		}
 
 		if string(dat) == "" {
-			return nil, fmt.Errorf("empty blockstore")
+			return nil, fmt.Errorf("Empty blockstore, %s", b.fullPath)
 		}
 
-		block, _ := big.NewInt(0).SetString(string(dat), 10)
+		block, ok := big.NewInt(0).SetString(string(dat), 10)
+		if !ok {
+			return nil, fmt.Errorf("Can't parse blockstore, %s :'%s'", b.fullPath, string(dat))
+		}
+
+		// log.Printf("Blockstore, %s :'%s'", b.fullPath, string(dat))
 		return block, nil
 	}
 
