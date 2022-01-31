@@ -72,7 +72,7 @@ func (b *Blockstore) StoreBlock(block *big.Int) error {
 		return err
 	}
 
-	b.TryLoadLatestBlock()
+	b.TryLoadLatestBlock(b.fullPath + ".tmp")
 
 	e := os.Rename(b.fullPath + ".tmp", b.fullPath)
 	if e != nil {
@@ -84,29 +84,34 @@ func (b *Blockstore) StoreBlock(block *big.Int) error {
 
 // TryLoadLatestBlock will attempt to load the latest block for the chain/relayer pair, returning 0 if not found.
 // Passing an empty string for path will cause it to use the home directory.
-func (b *Blockstore) TryLoadLatestBlock() (*big.Int, error) {
+func (b *Blockstore) TryLoadLatestBlock(argPath ...string) (*big.Int, error) {
 	// If it exists, load and return
-	exists, err := fileExists(b.fullPath)
+	fullPath:= b.fullPath
+	if len(argPath) > 0 {
+		fullPath = argPath[0]
+	}
+
+	exists, err := fileExists(fullPath)
 	if err != nil {
 		return nil, err
 	}
 
 	if exists {
-		dat, err := ioutil.ReadFile(b.fullPath)
+		dat, err := ioutil.ReadFile(fullPath)
 		if err != nil {
 			return nil, err
 		}
 
 		if string(dat) == "" {
-			return nil, fmt.Errorf("Empty blockstore, %s", b.fullPath)
+			return nil, fmt.Errorf("Empty blockstore, %s", fullPath)
 		}
 
 		block, ok := big.NewInt(0).SetString(string(dat), 10)
 		if !ok {
-			return nil, fmt.Errorf("Can't parse blockstore, %s :'%s'", b.fullPath, string(dat))
+			return nil, fmt.Errorf("Can't parse blockstore, %s :'%s'", fullPath, string(dat))
 		}
 
-		// log.Printf("Blockstore, %s :'%s'", b.fullPath, string(dat))
+		// log.Printf("Blockstore, %s :'%s'", fullPath, string(dat))
 		return block, nil
 	}
 
