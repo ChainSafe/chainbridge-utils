@@ -1,4 +1,4 @@
-module github.com/ChainSafe/chainbridge-utils
+module github.com/vKolerts/chainbridge-utils
 
 go 1.13
 
