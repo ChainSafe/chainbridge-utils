@@ -42,6 +42,7 @@ func NewBlockstore(path string, chain msg.ChainId, relayer string) (*Blockstore,
 		if err != nil {
 			return nil, err
 		}
+
 		path = def
 	}
 
@@ -69,6 +70,7 @@ func (b *Blockstore) StoreBlock(block *big.Int) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -80,14 +82,21 @@ func (b *Blockstore) TryLoadLatestBlock() (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if exists {
 		dat, err := ioutil.ReadFile(b.fullPath)
 		if err != nil {
 			return nil, err
 		}
+
+		if string(dat) == '' {
+			return nil, errors.New("empty blockstore")
+		}
+
 		block, _ := big.NewInt(0).SetString(string(dat), 10)
 		return block, nil
 	}
+
 	// Otherwise just return 0
 	return big.NewInt(0), nil
 }
@@ -110,8 +119,10 @@ func fileExists(fileName string) (bool, error) {
 	_, err := os.Stat(fileName)
 	if os.IsNotExist(err) {
 		return false, nil
-	} else if err != nil {
+	}
+	else if err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
