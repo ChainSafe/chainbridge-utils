@@ -90,7 +90,7 @@ func (b *Blockstore) TryLoadLatestBlock() (*big.Int, error) {
 		}
 
 		if string(dat) == "" {
-			return nil, errors.New("empty blockstore")
+			return nil, fmt.Errorf("empty blockstore")
 		}
 
 		block, _ := big.NewInt(0).SetString(string(dat), 10)
