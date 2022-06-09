@@ -18,7 +18,7 @@ import (
 )
 
 type httpMetricServer struct {
-	mutex        sync.Mutex
+	mutex        sync.RWMutex
 	port         int
 	blockTimeout int // After this duration (seconds) with no change in block height a chain will be considered unhealthy
 	chains       map[string]core.Chain
